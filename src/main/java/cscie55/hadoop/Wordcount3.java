@@ -18,10 +18,11 @@ public class Wordcount3 {
 
 
     public static class TokenizerMapper
-            extends Mapper<Object, Text, Text, IntWritable>{
+            extends Mapper<Object, Text, IntWritable, IntWritable>{
 
         private final static IntWritable one = new IntWritable(1);
         private Text word = new Text();
+        private IntWritable result = new IntWritable();
 
         public void map(Object key, Text value, Context context
         ) throws IOException, InterruptedException {
@@ -29,16 +30,17 @@ public class Wordcount3 {
             while (itr.hasMoreTokens()) {
                 word.set(itr.nextToken());
                 word = new Text(word.toString().toLowerCase().replaceAll("[^A-Za-z0-9]", "").trim());
-                context.write(word, one);
+                IntWritable length = new IntWritable(word.getLength());
+                context.write(length, one);
             }
         }
     }
 
     public static class IntSumReducer
-            extends Reducer<Text,IntWritable,Text,IntWritable> {
+            extends Reducer<IntWritable,IntWritable,IntWritable,IntWritable> {
         private IntWritable result = new IntWritable();
 
-        public void reduce(Text key, Iterable<IntWritable> values,
+        public void reduce(IntWritable key, Iterable<IntWritable> values,
                            Context context
         ) throws IOException, InterruptedException {
             int sum = 0;
@@ -63,7 +65,7 @@ public class Wordcount3 {
         job.setMapperClass(TokenizerMapper.class);
         job.setCombinerClass(IntSumReducer.class);
         job.setReducerClass(IntSumReducer.class);
-        job.setOutputKeyClass(Text.class);
+        job.setOutputKeyClass(IntWritable.class);
         job.setOutputValueClass(IntWritable.class);
 
         // these lines are for dev purposes
